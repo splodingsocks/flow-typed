@@ -53,7 +53,7 @@ type TestGroup = {
  * structs. Each TestGroup represents a Package/PackageVersion/FlowVersion
  * directory.
  */
-const basePathRegex = new RegExp('definitions/npm/(@[^/]*/)?[^/]*/?');
+const basePathRegex = new RegExp('experimental/definitions/(@[^/]*/)?[^/]*/?');
 async function getTestGroups(
   repoDirPath,
   onlyChanged: boolean = false,
@@ -291,10 +291,15 @@ async function getCachedFlowBinVersions(
 }
 
 async function writeFlowConfig(repoDirPath, testDirPath, libDefPath, version) {
+  const basePath = path.dirname(libDefPath);
   const destFlowConfigPath = path.join(testDirPath, '.flowconfig');
+  const pkg = path.join(basePath, 'package.json');
+  const deps = Object.keys(require(pkg).dependencies)
+    .map(key => path.join(basePath, 'node_modules', key, 'index.js'));
 
   const flowConfigData = [
     '[libs]',
+    ...deps,
     path.basename(libDefPath),
     path.join(repoDirPath, '..', '__util__', 'tdd_framework.js'),
     '',
@@ -667,10 +672,10 @@ export async function run(argv: Args): Promise<number> {
 
   const cwd = process.cwd();
   const basePath = argv.path ? String(argv.path) : cwd;
-  const cwdDefsNPMPath = path.join(basePath, 'definitions', 'npm');
+  const cwdDefsNPMPath = path.join(basePath, 'experimental', 'definitions');
   let repoDirPath = (await fs.exists(cwdDefsNPMPath))
     ? cwdDefsNPMPath
-    : path.join(__dirname, '..', '..', '..', 'definitions', 'npm');
+    : path.join(__dirname, '..', '..', '..', 'experimental', 'definitions');
 
   if (onlyChanged) {
     console.log(

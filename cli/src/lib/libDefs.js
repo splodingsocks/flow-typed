@@ -154,9 +154,15 @@ export {
 };
 
 async function addLibDefs(pkgDirPath, libDefs: Array<LibDef>) {
-  const parsedDirItem = parseRepoDirItem(pkgDirPath);
-  (await parseLibDefsFromPkgDir(parsedDirItem, pkgDirPath)).forEach(libDef =>
-    libDefs.push(libDef),
+  const versionedRepoDirs = await fs.readdir(pkgDirPath);
+  const parsedDirItems = versionedRepoDirs
+    .map(dir => path.join(pkgDirPath, dir))
+    .map(parseRepoDirItem);
+  await Promise.all(
+    parsedDirItems.map(async parsedDirItem => {
+      const libdefs = await parseLibDefsFromPkgDir(parsedDirItem);
+      libdefs.forEach(libDef => libDefs.push(libDef));
+    }),
   );
 }
 
@@ -211,10 +217,11 @@ function parsePkgFlowDirVersion(pkgFlowDirPath): FlowVersion {
  * on disk, scan the directory and generate a list of LibDefs for each
  * flow-versioned definition file.
  */
-async function parseLibDefsFromPkgDir(
-  {pkgName, pkgVersion},
-  pkgDirPath,
-): Promise<Array<LibDef>> {
+async function parseLibDefsFromPkgDir({
+  pkgName,
+  pkgVersion,
+  path: pkgDirPath,
+}): Promise<Array<LibDef>> {
   const pkgVersionStr = versionToString(pkgVersion);
   const pkgDirItems = await fs.readdir(pkgDirPath);
 
@@ -253,9 +260,7 @@ async function parseLibDefsFromPkgDir(
   await P.all(
     flowDirs.map(async ([flowDirPath, flowVersion]) => {
       const testFilePaths = [].concat(commonTestFiles);
-      const basePkgName =
-        pkgName.charAt(0) === '@' ? pkgName.split(path.sep).pop() : pkgName;
-      const libDefFileName = `${basePkgName}_${pkgVersionStr}.js`;
+      const libDefFileName = `index.js`;
       let libDefFilePath;
       (await fs.readdir(flowDirPath)).forEach(flowDirItem => {
         const flowDirItemPath = path.join(flowDirPath, flowDirItem);
@@ -282,10 +287,24 @@ async function parseLibDefsFromPkgDir(
             testFilePaths.push(flowDirItemPath);
           }
         } else {
+          const isValidTestDir =
+            path.basename(flowDirItemPath) === 'tests' ||
+            path.basename(flowDirItemPath) === 'node_modules';
+          if (isValidTestDir) return;
           const error = 'Unexpected directory item: ' + flowDirItemPath;
           throw new ValidationError(error);
         }
       });
+
+      (await fs.readdir(path.join(flowDirPath, 'tests'))).forEach(
+        testFileItem => {
+          const flowDirItemPath = path.join(flowDirPath, 'tests', testFileItem);
+          const isValidTestFile = validateTestFile(flowDirItemPath);
+          if (isValidTestFile) {
+            testFilePaths.push(flowDirItemPath);
+          }
+        },
+      );
 
       if (libDefFilePath == null) {
         libDefFilePath = path.join(flowDirPath, libDefFileName);
@@ -328,7 +347,7 @@ export function parseRepoDirItem(dirItemPath: string) {
   const item = path
     .dirname(dirItemPath)
     .split(path.sep)
-    .pop();
+    .splice(-2, 2)[0];
   if (item.charAt(0) === '@') {
     pkgName = `${item}${path.sep}${pkgName}`;
   }
@@ -340,7 +359,11 @@ export function parseRepoDirItem(dirItemPath: string) {
     prerel = prerel.substr(1);
   }
 
-  return {pkgName, pkgVersion: {major, minor, patch, prerel}};
+  return {
+    pkgName,
+    pkgVersion: {major, minor, patch, prerel},
+    path: dirItemPath,
+  };
 }
 
 /**
@@ -417,12 +440,16 @@ function writeVerbose(stream, msg, writeNewline = true) {
  * If the repo checkout does not exist or is out of date, it will be
  * created/updated automatically first.
  */
-const CACHE_REPO_DEFS_DIR = path.join(CACHE_REPO_DIR, 'definitions', 'npm');
+const CACHE_REPO_DEFS_DIR = path.join(
+  CACHE_REPO_DIR,
+  'experimental',
+  'definitions',
+);
 export async function getCacheLibDefs(
   verbose?: VerboseOutput = process.stdout,
 ) {
   await ensureCacheRepo(verbose);
-  await verifyCLIVersion(path.join(CACHE_REPO_DIR, 'definitions'));
+  await verifyCLIVersion(path.join(CACHE_REPO_DIR, 'experimental'));
   return getLibDefs(CACHE_REPO_DEFS_DIR);
 }
 

@@ -28,8 +28,9 @@ describe('npmLibDefs', () => {
       const UNDERSCORE_PATH = path.join(
         FIXTURE_ROOT,
         'well-formed',
+        'experimental',
         'definitions',
-        'npm',
+        'underscore',
         'underscore_v1.x.x',
       );
       const defs = await extractLibDefsFromNpmPkgDir(
@@ -59,11 +60,16 @@ describe('npmLibDefs', () => {
             path: path.join(
               UNDERSCORE_PATH,
               'flow_v0.13.x-v0.37.x',
-              'underscore_v1.x.x.js',
+              'index.js',
             ),
             scope: null,
             testFilePaths: [
-              path.join(UNDERSCORE_PATH, 'test_underscore-v1.js'),
+              path.join(
+                UNDERSCORE_PATH,
+                'flow_v0.13.x-v0.37.x',
+                'tests',
+                'test_underscore-v1.js',
+              ),
             ],
             version: 'v1.x.x',
           },
@@ -79,15 +85,21 @@ describe('npmLibDefs', () => {
               upper: null,
             },
             name: 'underscore',
-            path: path.join(
-              UNDERSCORE_PATH,
-              'flow_v0.38.x-',
-              'underscore_v1.x.x.js',
-            ),
+            path: path.join(UNDERSCORE_PATH, 'flow_v0.38.x-', 'index.js'),
             scope: null,
             testFilePaths: [
-              path.join(UNDERSCORE_PATH, 'test_underscore-v1.js'),
-              path.join(UNDERSCORE_PATH, 'flow_v0.38.x-', 'test_underscore.js'),
+              path.join(
+                UNDERSCORE_PATH,
+                'flow_v0.13.x-v0.37.x',
+                'tests',
+                'test_underscore-v1.js',
+              ),
+              path.join(
+                UNDERSCORE_PATH,
+                'flow_v0.38.x-',
+                'tests',
+                'test_underscore.js',
+              ),
             ],
             version: 'v1.x.x',
           },
@@ -99,8 +111,9 @@ describe('npmLibDefs', () => {
       const UNDERSCORE_PATH = path.join(
         FIXTURE_ROOT,
         'bad-pkg-namever',
+        'experimental',
         'definitions',
-        'npm',
+        'underscore',
         'underscore_v1',
       );
       await expect(
@@ -115,8 +128,9 @@ describe('npmLibDefs', () => {
       const UNDERSCORE_PATH = path.join(
         FIXTURE_ROOT,
         'unexpected-pkg-file',
+        'experimental',
         'definitions',
-        'npm',
+        'underscore',
         'underscore_v1.x.x',
       );
       await expect(
@@ -130,8 +144,9 @@ describe('npmLibDefs', () => {
       const UNDERSCORE_PATH = path.join(
         FIXTURE_ROOT,
         'overlapping-flow-versions',
+        'experimental',
         'definitions',
-        'npm',
+        'underscore',
         'underscore_v1.x.x',
       );
 
@@ -144,8 +159,9 @@ describe('npmLibDefs', () => {
       const UNDERSCORE_PATH = path.join(
         FIXTURE_ROOT,
         'empty-libdef-dir',
+        'experimental',
         'definitions',
-        'npm',
+        'underscore',
         'underscore_v1.x.x',
       );
       await expect(
@@ -344,7 +360,11 @@ describe('npmLibDefs', () => {
     const FIXTURE_ROOT = path.join(BASE_FIXTURE_ROOT, 'getNpmLibDefs');
 
     it('parses npm scope name correctly', async () => {
-      const FIXTURE_DIR = path.join(FIXTURE_ROOT, 'scoped-pkgs', 'definitions');
+      const FIXTURE_DIR = path.join(
+        FIXTURE_ROOT,
+        'scoped-pkgs',
+        'experimental',
+      );
       const libDefs = await getNpmLibDefs(FIXTURE_DIR);
       expect(libDefs.length).toBe(4);
       const scopedLibDefs = libDefs.filter(def => def.scope !== null);
@@ -355,7 +375,7 @@ describe('npmLibDefs', () => {
       const FIXTURE_DIR = path.join(
         FIXTURE_ROOT,
         'unexpected-file',
-        'definitions',
+        'experimental',
       );
 
       await expect(getNpmLibDefs(FIXTURE_DIR)).rejects.toEqual([

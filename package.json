@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "name": "flow-typed",
+  "version": "0.0.0",
+  "flowVersion": "flow_all",
+  "scripts": {
+    "sync-definitions": "./experimental/scripts/sync-definitions.js"
+  },
+  "devDependencies": {
+    "bolt": "git://github.com/flow-typed/bolt.git#master",
+    "glob": "^7.1.2",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.2",
+    "semver": "^5.6.0"
+  },
+  "bolt": {
+    "workspaces": [
+      "experimental/definitions/**/*",
+      "!experimental/definitions/**/node_modules/**"
+    ]
+  }
+}
