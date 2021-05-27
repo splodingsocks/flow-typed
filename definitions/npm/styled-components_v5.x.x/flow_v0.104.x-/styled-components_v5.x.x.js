@@ -249,7 +249,10 @@ declare module 'styled-components' {
   |};
 
   declare export type StyledShorthandFactory<V> = {|
-    [[call]]: <StyleProps, Theme>(
+    [[call]]: (
+      string[]
+    ) => StyledComponent<{ ... }, { ... }, V>,
+    [[call]]: <StyleProps = { ... }, Theme = { ... }>(
       string[],
       ...Interpolation<PropsWithTheme<StyleProps, Theme>>[]
     ) => StyledComponent<StyleProps, Theme, V>,
